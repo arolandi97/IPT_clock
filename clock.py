@@ -178,10 +178,15 @@ class AnalogClock(QWidget):
         self.parent = parent
 
         self.setMinimumSize(500, 500)
+        self.elapsedTime = 0
+        self.timeout_duration = 60
+        self.t_elapsedC = 0
+        self.timeout_start = 0
+        self.prev_pause = 0
 
     def paintEvent(self, event):
         side = int(min(self.width(), self.height()) * 0.8 / 2)
-        if not(self.paused):
+        if not self.paused:
             if self.timeout:
                 self.t_elapsedC = (datetime.datetime.now() - self.timeout_start)
             else:
@@ -206,7 +211,7 @@ class AnalogClock(QWidget):
         self.painter.save()
         currentAngle = - 2 * math.pi * self.elapsedTime / self.duration
         if not(abs(currentAngle) > 2 * math.pi):
-            self.painter.drawPie(-side, -side, 2 * side, 2 * side, 90 * 16,
+            self.painter.drawPie(-side, -side, 2 * side, 2 * side, 90*16,
                                  currentAngle * (360 / (2 * math.pi)) * 16)
             self.parent.countDown.setText(
                 'Time remaining : ' + printMinuteSecondDelta(datetime.timedelta(seconds=self.duration) - self.elapsedTimeClock))
@@ -225,10 +230,10 @@ class AnalogClock(QWidget):
         # timeout
         if self.timeout:
             self.painter.setBrush(QColor(235, 120, 0))
-            self.t_elapsed = self.t_elapsedC.total_seconds()
-            t_angle = - 2 * math.pi * self.t_elapsed / self.timeout_duration
-            self.painter.drawPie(-side, -side, 2 * side, 2 * side, ((currentAngle) * (360 / (2 * math.pi))+90) * 16,
-                                 (currentAngle + t_angle) * (360 / (2 * math.pi)) * 16)
+            t_angle = - 2 * math.pi * self.t_elapsedC.total_seconds() / self.timeout_duration
+            self.painter.drawPie(-side, -side, 2 * side, 2 * side,
+                                 currentAngle * (360 / (2 * math.pi)) * 16 + 90*16,
+                                 t_angle * (360 / (2 * math.pi)) * 16)
             self.parent.countDown.setText(
                 'Time remaining : ' + printMinuteSecondDelta(datetime.timedelta(seconds=self.duration) - self.elapsedTimeClock)
                 + ' (' + printMinuteSecondDelta(datetime.timedelta(seconds=self.timeout_duration) - self.t_elapsedC) + ')')
@@ -253,10 +258,15 @@ class AnalogClock(QWidget):
             delta = (datetime.datetime.now() - self.startPause)
             self.datestart += delta
             self.prev_datestart += delta
+            if self.timeout:
+                self.timeout_start += delta
         else:
             self.paused = True
-            self.elapsedTimeClock = (datetime.datetime.now() - self.datestart)
-            self.prev_elapsed = (datetime.datetime.now() - self.prev_datestart)
+            if self.timeout:
+                self.t_elapsedC = (datetime.datetime.now() - self.timeout_start)
+            else:
+                self.elapsedTimeClock = (datetime.datetime.now() - self.datestart)
+                self.prev_elapsed = (datetime.datetime.now() - self.prev_datestart)
             self.startPause = datetime.datetime.now()
 
     def reset(self, duration):
@@ -283,7 +293,6 @@ class AnalogClock(QWidget):
     def startTimeout(self):
         self.timeout = True
         self.t_elapsedC = datetime.timedelta()
-        self.timeout_duration = 60
         self.timeout_start = datetime.datetime.now()
 
     def stopTimeout(self):
@@ -411,9 +420,9 @@ class ClockControls(QDialog):
 
     def switchPause(self):
         if self.parent.m.paused:
-            self.pauseButton.setText('Pause again')
+            self.pauseButton.setText('Pause')
         else:
-            self.pauseButton.setText('Start again')
+            self.pauseButton.setText('Start')
         self.parent.m.switchPause()
 
     def changeState(self, curr):
