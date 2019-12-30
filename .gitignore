@@ -1,0 +1,6 @@
+# Folders with generated files
+build
+dist
+
+# Smth temporary and python-specific
+__pycache__

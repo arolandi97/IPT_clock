@@ -101,7 +101,7 @@ class App(QWidget):
             print('Stepping to state {}'.format(
                 self.states[self.state]['name']))
 
-            self.m.reset(self.states[self.state]['duration'])
+            self.m.reset(self.states[self.state]['duration'],self.states[self.state]['force_step'])
 
             self.update_state_appearance()
         else:
@@ -171,6 +171,7 @@ class AnalogClock(QWidget):
         self.prev_datestart = self.datestart
 
         self.duration = duration
+        self.force_step = False
         self.prev_duration = self.duration
         self.paused = True
         self.overtime = False
@@ -251,6 +252,10 @@ class AnalogClock(QWidget):
 
         self.painter.end()
 
+        if self.overtime and self.force_step and self.parent:
+            self.parent.stepEvent()
+
+
     def switchPause(self):
         if self.paused:
             self.paused = False
@@ -269,11 +274,13 @@ class AnalogClock(QWidget):
                 self.prev_elapsed = (datetime.datetime.now() - self.prev_datestart)
             self.startPause = datetime.datetime.now()
 
-    def reset(self, duration):
+    def reset(self, duration, force_step=False):
         self.overtime = False
         self.prev_duration = self.duration
+        self.prev_force_step = self.force_step
         self.prev_datestart = self.datestart
         self.duration = duration
+        self.force_step = force_step
         self.datestart = datetime.datetime.now()
 
         if self.paused:
@@ -459,7 +466,9 @@ if __name__ == '__main__':
     with open(statesFile, newline='', encoding='utf-8') as csvfile:
         reader = csv.reader(csvfile, delimiter=';', quotechar='|')
         for row in reader:
-            states.append({'name': row[0], 'duration': float(row[1])*60})
+            state = {'name': row[0], 'duration': float(row[1])*60}
+            state['force_step'] = ( len(row) > 2 and row[2] )
+            states.append(state)
 
     app = QApplication(sys.argv)
     ex = App(states)
