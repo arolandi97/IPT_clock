@@ -7,14 +7,32 @@ from PyQt5.QtSvg import *
 import math
 import time, datetime
 
-def printMinuteSecondDelta(delta):
-    s = delta.total_seconds()
-    return '{min:02d}:{sec:02d}'.format(min=int(s % 3600) // 60, sec=int(s % 60))
-
 labelFontCoeff = 15
 countDownFontCoeff = 20
 logoSizeCoeffMin = 0.17
 logoSizeCoeffMax = 0.35
+
+base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+def main():
+    statesFile = os.path.abspath(os.path.join(base_path,'data','states.csv'))
+
+    states = []
+    with open(statesFile, newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile, delimiter=';', quotechar='|')
+        for row in reader:
+            states.append({'name': row[0], 'duration': float(row[1])*60})
+
+    app = QApplication(sys.argv)
+    ex = App(states)
+    ex.show()
+    ex.childWindow.show()
+    sys.exit(app.exec_())
+
+
+def printMinuteSecondDelta(delta):
+    s = delta.total_seconds()
+    return '{min:02d}:{sec:02d}'.format(min=int(s % 3600) // 60, sec=int(s % 60))
 
 
 class App(QWidget):
@@ -56,10 +74,7 @@ class App(QWidget):
         self.leftLayout = QVBoxLayout()
         self.logoIPT = QLabel()
 
-        if hasattr(sys, "_MEIPASS"):  # For PyInstaller
-            IPTFile = os.path.join(sys._MEIPASS, 'img1.png')
-        else:
-            IPTFile = 'img1.png'
+        IPTFile = os.path.abspath(os.path.join(base_path,'data','img1.png'))
 
         self.pixmapIPT = QPixmap(IPTFile)
         self.logoIPT.setPixmap(self.pixmapIPT)
@@ -450,19 +465,4 @@ class ClockControls(QDialog):
         self.parent.m.addTime(-dt)
 
 if __name__ == '__main__':
-    if hasattr(sys, "_MEIPASS"):  # For PyInstaller
-        statesFile = os.path.join(sys._MEIPASS, 'states.csv')
-    else:
-        statesFile = 'states.csv'
-
-    states = []
-    with open(statesFile, newline='', encoding='utf-8') as csvfile:
-        reader = csv.reader(csvfile, delimiter=';', quotechar='|')
-        for row in reader:
-            states.append({'name': row[0], 'duration': float(row[1])*60})
-
-    app = QApplication(sys.argv)
-    ex = App(states)
-    ex.show()
-    ex.childWindow.show()
-    sys.exit(app.exec_())
+    main()
