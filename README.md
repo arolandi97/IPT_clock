@@ -1,4 +1,4 @@
-```
+
 # Clock used for the IPT
 
 ### General Infos
@@ -20,4 +20,3 @@ In the *data* folder there are *states.csv* (for the states of the clock) and *i
 ### Known problems
 On MacOS the graphics of the clock controls are slightly laggy, though clicking on the clock panel fixes the graphical lag.
 
-```
