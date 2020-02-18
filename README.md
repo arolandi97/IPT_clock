@@ -2,7 +2,7 @@
 # Clock used for the IPT
 
 ## General Infos
-Should be free (major) bugs,
+Should be free of bugs,
 The *cancel mistake* option should not be used during timeout
 All keyboard shortcuts have been removed to avoid mistakes, feel free to modify the code to add them
 
