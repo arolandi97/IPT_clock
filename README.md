@@ -10,7 +10,7 @@ All keyboard shortcuts have been removed to avoid mistakes, feel free to modify 
 
 ## Usage
 ### Executables
-Executable files are available Unix systems and Windows in the *executables* folder, be sure to copy the whole folder corresponding to your OS as the app needs the *data* folder
+Executable files are available for Unix systems and Windows in the *executables* folder, be sure to copy the whole folder corresponding to your OS as the app needs the *data* folder
 
 ### Python
 Simply run *clock.py*
