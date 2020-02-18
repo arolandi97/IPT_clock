@@ -17,6 +17,6 @@ Simply run *clock.py*
 ## Settings
 In the *data* folder there are *states.csv* (for the states of the clock) and *img1.png* for the image on the side of the clock, feel free to modify theses files, simply do not change their names.
 
-## Known problems
+## Known issues
 On MacOS the graphics of the clock controls are slightly laggy, though clicking on the clock panel fixes the graphical lag.
 
