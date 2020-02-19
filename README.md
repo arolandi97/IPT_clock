@@ -14,10 +14,10 @@ The *cancel mistake* option should not be used during timeout, to stop the timeo
 
 ## Usage
 ### Executables
-Executable files are available for Unix systems and Windows in the *executables* folder, be sure to copy the whole folder corresponding to your OS as the app needs the *data* folder
+Executable files are available for Unix systems and Windows in the *executables* folder. The executable needs to be in the same directory as the *data* folder.
 
 ### Python
-Simply run *clock.py*
+Simply run *clock.py* making sure that it is in the same directory as the *data* folder.
 
 You can execute the python code to run the clock and, eventually, modify it.
 
