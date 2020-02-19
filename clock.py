@@ -7,7 +7,7 @@ from PyQt5.QtSvg import *
 import math
 import time, datetime
 
-labelFontCoeff = 15
+labelFontCoeff = 18
 countDownFontCoeff = 20
 logoSizeCoeffMin = 0.17
 logoSizeCoeffMax = 0.35
@@ -49,11 +49,18 @@ class App(QWidget):
         p.setColor(self.backgroundRole(), QColor(255,255,255))
         self.setPalette(p)
 
+        # adding <br> to end of names for states that don't have <br> in the middle
+        for i in range(len(states)):
+            test = states[i]['name']
+            if not (('<br>' in test) or ('<br/>' in test) or ('<br />' in test)):
+                states[i]['name'] += '<br>'
+
+
         # Title of the state
         self.label = QLabel()
         self.label.setText(self.states[self.state]['name'])
         self.label.setAlignment(Qt.AlignCenter)
-        self.label.setFont(QFont('Arial', self.frameGeometry().height()/labelFontCoeff))
+        self.label.setFont(QFont('Arial', self.frameGeometry().height()/labelFontCoeff, QFont.Bold))
 
         # Initialize the clock
         self.m = AnalogClock(self.states[self.state]['duration'], parent=self)
@@ -94,6 +101,7 @@ class App(QWidget):
 
         self.childWindow = ClockControls(self)  # Clock controls
         self.childWindow.generateList(states)
+        self.childWindow.setFocus(True)  #fixes the bug where the keypress is undetected from ClockControls
 
         # Start at first event
         self.selectState(0)
@@ -107,7 +115,11 @@ class App(QWidget):
         return super(QWidget, self).eventFilter(source, event)
 
     def selectState(self, i):
-        self.childWindow.list.setCurrentItem(self.childWindow.statesList[i])
+        if i < len(self.childWindow.statesList):
+            self.childWindow.list.setCurrentItem(self.childWindow.statesList[i])
+        else:
+            self.childWindow.switchPause()
+            self.childWindow.list.setCurrentItem(self.childWindow.statesList[0])
 
     def setEvent(self, i):
         if i < len(self.states):
@@ -137,7 +149,7 @@ class App(QWidget):
     def startTimeout(self):
         print('Timeout')
         self.m.startTimeout()
-        self.label.setText(self.states[self.state]['name']+ '<br />(Timeout)')
+        self.label.setText(self.states[self.state]['name']+ '(Timeout)')
         self.update()
 
     def stopTimeout(self):
@@ -156,14 +168,14 @@ class App(QWidget):
             self.m.stopTimeout()
         else:
             i = self.state
-            self.selectState(i+1)
+            self.selectState(i+1) # selecting the state automatically triggers setEvent
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_N:
-            self.setEvent(self.state + 1)
+            self.stepEvent()
 
     def resizeEvent(self, event):
-        self.label.setFont(QFont('Arial', self.frameGeometry().height()/labelFontCoeff))
+        self.label.setFont(QFont('Arial', self.frameGeometry().height()/labelFontCoeff, QFont.Bold))
         self.countDown.setFont(QFont('Arial', self.frameGeometry().height()/countDownFontCoeff))
 
         self.logoIPT.setMinimumWidth(self.frameGeometry().width()*logoSizeCoeffMin)
@@ -200,7 +212,7 @@ class AnalogClock(QWidget):
         self.prev_pause = 0
 
     def paintEvent(self, event):
-        side = int(min(self.width(), self.height()) * 0.8 / 2)
+        side = int(min(self.width(), self.height()) * 0.95 / 2)
         if not self.paused:
             if self.timeout:
                 self.t_elapsedC = (datetime.datetime.now() - self.timeout_start)
@@ -322,8 +334,8 @@ class AnalogClock(QWidget):
 
 
 class ClockControls(QDialog):
-    def __init__(self, parent,):
-        QDialog.__init__(self, parent)
+    def __init__(self, parent):
+        super().__init__(parent)
         self.title = 'IPT clock controls'
         self.state = 0
         self.setWindowTitle(self.title)
@@ -425,11 +437,15 @@ class ClockControls(QDialog):
 
         self.setLayout(self.vLayout)
 
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_N:
+            self.parent.stepEvent()
+
     def generateList(self, states):
         self.statesList = []
         for state in states:
             item = QListWidgetItem('{} ({} s)'.format(
-                state['name'].replace('<br />','').replace('<br/>',''), state['duration']))
+                state['name'].replace('<br />','').replace('<br/>','').replace('<br>',''), state['duration']))
             self.statesList.append(item)
             self.list.addItem(item)
 
@@ -443,6 +459,7 @@ class ClockControls(QDialog):
     def changeState(self, curr):
         new_state = self.statesList.index(curr)
         self.parent.setEvent(new_state)
+        self.setFocus(True)  #fixes the bug where the keypress is undetected from ClockControls
 
     def addMinute(self):
         self.parent.m.addTime(60)
