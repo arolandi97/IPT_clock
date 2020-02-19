@@ -347,6 +347,8 @@ class AnalogClock(QWidget):
         self.parent.stopTimeout()
 
     def addTime(self, toadd):
+        if self.duration+toadd <= 0:
+            toadd = 0
         self.duration += toadd
 
 
