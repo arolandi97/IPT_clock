@@ -147,7 +147,6 @@ class App(QWidget):
         self.update_state_appearance()
 
     def startTimeout(self):
-        print('Timeout')
         self.m.startTimeout()
         self.label.setText(self.states[self.state]['name']+ '(Timeout)')
         self.update()
@@ -173,6 +172,12 @@ class App(QWidget):
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_N:
             self.stepEvent()
+        if e.key() == Qt.Key_Z:
+            self.returnToLastState()
+        if e.key() == Qt.Key_T:
+            self.startTimeout()
+        if e.key() == Qt.Key_Space:
+            self.childWindow.switchPause()
 
     def resizeEvent(self, event):
         self.label.setFont(QFont('Arial', self.frameGeometry().height()/labelFontCoeff, QFont.Bold))
@@ -318,9 +323,13 @@ class AnalogClock(QWidget):
             self.startPause = self.prev_pause
 
     def startTimeout(self):
-        self.timeout = True
-        self.t_elapsedC = datetime.timedelta()
-        self.timeout_start = datetime.datetime.now()
+        if self.timeout == False:
+            print('Timeout')
+            self.timeout = True
+            self.t_elapsedC = datetime.timedelta()
+            self.timeout_start = datetime.datetime.now()
+        else:
+            print('Timeout already on, press next to stop it')
 
     def stopTimeout(self):
         self.timeout = False
@@ -440,6 +449,12 @@ class ClockControls(QDialog):
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_N:
             self.parent.stepEvent()
+        if e.key() == Qt.Key_Z:
+            self.parent.returnToLastState()
+        if e.key() == Qt.Key_T:
+            self.parent.startTimeout()
+        if e.key() == Qt.Key_Space:
+            self.switchPause()
 
     def generateList(self, states):
         self.statesList = []

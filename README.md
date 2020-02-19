@@ -6,7 +6,11 @@ Should be free of bugs,
 
 The *cancel mistake* option should not be used during timeout, to stop the timeout simply press *next*
 
-Keyboard shortcuts: N = next
+## Keyboard shortcuts
+* Space: start/pause
+* N: next
+* T: timeout
+* Z: cancel mistake
 
 ## Usage
 ### Executables
