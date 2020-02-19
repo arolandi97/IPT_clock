@@ -211,7 +211,7 @@ class AnalogClock(QWidget):
 
         self.setMinimumSize(500, 500)
         self.elapsedTime = 0
-        self.timeout_duration = 60
+        self.timeout_duration = 60  # timeout duration
         self.t_elapsedC = 0
         self.timeout_start = 0
         self.prev_pause = 0
@@ -277,6 +277,14 @@ class AnalogClock(QWidget):
         self.painter.drawLine(QPoint(0, 0), QPoint(
             -side * math.cos(math.pi / 2 - currentAngle),
             -side * math.sin(math.pi / 2 - currentAngle)))
+        if self.timeout:
+            self.painter.drawLine(QPoint(0, 0), QPoint(
+                -side * math.cos(math.pi / 2 - currentAngle - t_angle),
+                -side * math.sin(math.pi / 2 - currentAngle - t_angle)))
+            if abs(currentAngle + t_angle) < 2 * math.pi:
+                self.painter.drawLine(QPoint(0, 0), QPoint(0,-side))
+        else:
+            self.painter.drawLine(QPoint(0, 0), QPoint(0,-side))
         self.painter.drawArc(-side, -side, 2 * side,
                              2 * side, 90 * 16, 360 * 16)
         self.painter.restore()
