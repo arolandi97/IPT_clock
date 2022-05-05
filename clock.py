@@ -8,7 +8,7 @@ import math
 import time, datetime
 
 labelFontCoeff = 18
-countDownFontCoeff = 20
+countDownFontCoeff = 60
 logoSizeCoeffMin = 0.17
 logoSizeCoeffMax = 0.35
 
@@ -54,7 +54,6 @@ class App(QWidget):
             test = states[i]['name']
             if not (('<br>' in test) or ('<br/>' in test) or ('<br />' in test)):
                 states[i]['name'] += '<br>'
-
 
         # Title of the state
         self.label = QLabel()
