@@ -59,7 +59,7 @@ class App(QWidget):
         self.label = QLabel()
         self.label.setText(self.states[self.state]['name'])
         self.label.setAlignment(Qt.AlignCenter)
-        self.label.setFont(QFont('Arial', self.frameGeometry().height()/labelFontCoeff, QFont.Bold))
+        self.label.setFont(QFont('Arial', int(self.frameGeometry().height()/labelFontCoeff), QFont.Bold))
 
         # Initialize the clock
         self.m = AnalogClock(self.states[self.state]['duration'], parent=self)
@@ -69,7 +69,7 @@ class App(QWidget):
         # Right layout
         self.countDown = QLabel()
         self.countDown.setAlignment(Qt.AlignCenter)
-        self.countDown.setFont(QFont('Arial', self.frameGeometry().height()/countDownFontCoeff))
+        self.countDown.setFont(QFont('Arial', int(self.frameGeometry().height()/countDownFontCoeff)))
         self.rightLayout = QVBoxLayout()
 
         self.rightLayout.addWidget(self.label)
@@ -87,8 +87,8 @@ class App(QWidget):
         self.logoIPT.setMinimumSize(1, 1)
         self.logoIPT.installEventFilter(self)
 
-        self.logoIPT.setMinimumWidth(self.frameGeometry().width()*logoSizeCoeffMin)
-        self.logoIPT.setMaximumWidth(self.frameGeometry().width()*logoSizeCoeffMax)
+        self.logoIPT.setMinimumWidth(int(self.frameGeometry().width()*logoSizeCoeffMin))            #int()
+        self.logoIPT.setMaximumWidth(int(self.frameGeometry().width()*logoSizeCoeffMax))            #int()
 
         self.leftLayout.addWidget(self.logoIPT)
 
@@ -179,11 +179,11 @@ class App(QWidget):
             self.childWindow.switchPause()
 
     def resizeEvent(self, event):
-        self.label.setFont(QFont('Arial', self.frameGeometry().height()/labelFontCoeff, QFont.Bold))
-        self.countDown.setFont(QFont('Arial', self.frameGeometry().height()/countDownFontCoeff))
+        self.label.setFont(QFont('Arial', int(self.frameGeometry().height()/labelFontCoeff), QFont.Bold))
+        self.countDown.setFont(QFont('Arial', int(self.frameGeometry().height()/countDownFontCoeff)))
 
-        self.logoIPT.setMinimumWidth(self.frameGeometry().width()*logoSizeCoeffMin)
-        self.logoIPT.setMaximumWidth(self.frameGeometry().width()*logoSizeCoeffMax)
+        self.logoIPT.setMinimumWidth(int(self.frameGeometry().width()*logoSizeCoeffMin))                #int()
+        self.logoIPT.setMaximumWidth(int(self.frameGeometry().width()*logoSizeCoeffMax))                #int()
 
 class AnalogClock(QWidget):
 
@@ -240,10 +240,10 @@ class AnalogClock(QWidget):
 
         # Do the actual painting
         self.painter.save()
-        currentAngle = - 2 * math.pi * self.elapsedTime / self.duration
+        currentAngle = - 2 * math.pi * self.elapsedTime / self.duration                    #changement douteux ici Avant : - 2 * math.pi * self.elapsedTime / self.duration 
         if not(abs(currentAngle) > 2 * math.pi):
             self.painter.drawPie(-side, -side, 2 * side, 2 * side, 90*16,
-                                 currentAngle * (360 / (2 * math.pi)) * 16)
+                                 int(currentAngle * (360 / (2 * math.pi)) * 16))         #changement douteux ici Avant : pad de int
             self.parent.countDown.setText(
                 'Time remaining : ' + printMinuteSecondDelta(datetime.timedelta(seconds=self.duration) - self.elapsedTimeClock))
         elif 4 * math.pi > abs(currentAngle) > 2 * math.pi:
@@ -252,8 +252,8 @@ class AnalogClock(QWidget):
                                  2 * side, 90 * 16, 360 * 16)
             self.painter.setBrush(QColor(200, 0, 0))
             self.painter.drawPie(-side, -side, 2 * side, 2 * side, 90 * 16,
-                                 (currentAngle + 2 * math.pi) *
-                                 (360 / (2 * math.pi)) * 16)
+                                 int((currentAngle + 2 * math.pi) *
+                                 (360 / (2 * math.pi)) * 16))
         else:
             self.painter.setBrush(QColor(200, 0, 0))
             self.painter.drawPie(-side, -side, 2 * side,
@@ -263,8 +263,8 @@ class AnalogClock(QWidget):
             self.painter.setBrush(QColor(235, 120, 0))
             t_angle = - 2 * math.pi * self.t_elapsedC.total_seconds() / self.timeout_duration
             self.painter.drawPie(-side, -side, 2 * side, 2 * side,
-                                 currentAngle * (360 / (2 * math.pi)) * 16 + 90*16,
-                                 t_angle * (360 / (2 * math.pi)) * 16)
+                                 int(currentAngle * (360 / (2 * math.pi)) * 16 + 90*16),           #int()
+                                 int(t_angle * (360 / (2 * math.pi)) * 16))                         #int()
             self.parent.countDown.setText(
                 'Time remaining : ' + printMinuteSecondDelta(datetime.timedelta(seconds=self.duration) - self.elapsedTimeClock)
                 + ' (' + printMinuteSecondDelta(datetime.timedelta(seconds=self.timeout_duration) - self.t_elapsedC) + ')')
@@ -274,12 +274,12 @@ class AnalogClock(QWidget):
         self.painter.setPen(QColor(0, 0, 0))
         self.painter.setBrush(Qt.NoBrush)
         self.painter.drawLine(QPoint(0, 0), QPoint(
-            -side * math.cos(math.pi / 2 - currentAngle),
-            -side * math.sin(math.pi / 2 - currentAngle)))
+            int(-side * math.cos(math.pi / 2 - currentAngle)),                               #int()
+            int(-side * math.sin(math.pi / 2 - currentAngle))))                             #int()
         if self.timeout:
             self.painter.drawLine(QPoint(0, 0), QPoint(
-                -side * math.cos(math.pi / 2 - currentAngle - t_angle),
-                -side * math.sin(math.pi / 2 - currentAngle - t_angle)))
+                int(-side * math.cos(math.pi / 2 - currentAngle - t_angle)),            #int()
+                int(-side * math.sin(math.pi / 2 - currentAngle - t_angle))))           #int()
             if abs(currentAngle + t_angle) < 2 * math.pi:
                 self.painter.drawLine(QPoint(0, 0), QPoint(0,-side))
         else:
