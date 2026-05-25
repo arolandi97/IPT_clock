@@ -8,9 +8,8 @@ import math
 import time, datetime
 
 labelFontCoeff = 18
-countDownFontCoeff = 60
-logoSizeCoeffMin = 0.17
-logoSizeCoeffMax = 0.35
+countDownFontCoeff = 25
+logoMaxWidth = 260   # px, fixed cap so the logo doesn't keep growing with the window
 
 base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
 
@@ -57,9 +56,14 @@ class App(QWidget):
 
         # Title of the state
         self.label = QLabel()
+        self.label.setTextFormat(Qt.RichText)
         self.label.setText(self.states[self.state]['name'])
         self.label.setAlignment(Qt.AlignCenter)
-        self.label.setFont(QFont('Arial', int(self.frameGeometry().height()/labelFontCoeff), QFont.Bold))
+        label_size = max(18, int(self.frameGeometry().height() / labelFontCoeff))
+        self.label.setFont(QFont('Arial', label_size, QFont.Bold))
+        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.label.setMinimumHeight(60)
+        self.label.setWordWrap(True)
 
         # Initialize the clock
         self.m = AnalogClock(self.states[self.state]['duration'], parent=self)
@@ -69,12 +73,25 @@ class App(QWidget):
         # Right layout
         self.countDown = QLabel()
         self.countDown.setAlignment(Qt.AlignCenter)
-        self.countDown.setFont(QFont('Arial', int(self.frameGeometry().height()/countDownFontCoeff)))
+        self.countDown.setText('Time remaining : --:--')
+        countdown_size = max(20, int(self.frameGeometry().height() / countDownFontCoeff))
+        self.countDown.setFont(QFont('Arial', countdown_size, QFont.Bold))
+        self.countDown.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.countDown.setMinimumHeight(50)
+        self.countDown.setWordWrap(True)
+        self.countDown.setStyleSheet(
+            "QLabel {"
+            " border: 2px solid #1f3a5f;"
+            " border-radius: 8px;"
+            " padding: 8px 12px;"
+            " background-color: #ffffff;"
+            "}"
+        )
         self.rightLayout = QVBoxLayout()
 
-        self.rightLayout.addWidget(self.label)
-        self.rightLayout.addWidget(self.m)
-        self.rightLayout.addWidget(self.countDown)
+        # State title on top, clock fills the rest
+        self.rightLayout.addWidget(self.label, 0)
+        self.rightLayout.addWidget(self.m, 1)
 
         # Left layout
         self.leftLayout = QVBoxLayout()
@@ -84,18 +101,22 @@ class App(QWidget):
 
         self.pixmapIPT = QPixmap(IPTFile)
         self.logoIPT.setPixmap(self.pixmapIPT)
+        self.logoIPT.setAlignment(Qt.AlignCenter)
         self.logoIPT.setMinimumSize(1, 1)
         self.logoIPT.installEventFilter(self)
 
-        self.logoIPT.setMinimumWidth(int(self.frameGeometry().width()*logoSizeCoeffMin))            #int()
-        self.logoIPT.setMaximumWidth(int(self.frameGeometry().width()*logoSizeCoeffMax))            #int()
+        # Fixed cap so the logo stops growing with the window
+        self.logoIPT.setMaximumWidth(logoMaxWidth)
+        self.logoIPT.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
 
-        self.leftLayout.addWidget(self.logoIPT)
+        # Logo on top, countdown below it (with stretch in between so countdown sits near logo, not at bottom)
+        self.leftLayout.addWidget(self.logoIPT, 1)
+        self.leftLayout.addWidget(self.countDown, 0)
 
-        # Complete layout
+        # Complete layout — fixed column proportions (left:right ≈ 1:3) so everything scales together
         self.fullLayout = QHBoxLayout()
-        self.fullLayout.addLayout(self.leftLayout)
-        self.fullLayout.addLayout(self.rightLayout)
+        self.fullLayout.addLayout(self.leftLayout, 1)
+        self.fullLayout.addLayout(self.rightLayout, 3)
         self.setLayout(self.fullLayout)
 
         self.childWindow = ClockControls(self)  # Clock controls
@@ -179,11 +200,10 @@ class App(QWidget):
             self.childWindow.switchPause()
 
     def resizeEvent(self, event):
-        self.label.setFont(QFont('Arial', int(self.frameGeometry().height()/labelFontCoeff), QFont.Bold))
-        self.countDown.setFont(QFont('Arial', int(self.frameGeometry().height()/countDownFontCoeff)))
-
-        self.logoIPT.setMinimumWidth(int(self.frameGeometry().width()*logoSizeCoeffMin))                #int()
-        self.logoIPT.setMaximumWidth(int(self.frameGeometry().width()*logoSizeCoeffMax))                #int()
+        label_size = max(18, int(self.frameGeometry().height() / labelFontCoeff))
+        countdown_size = max(20, int(self.frameGeometry().height() / countDownFontCoeff))
+        self.label.setFont(QFont('Arial', label_size, QFont.Bold))
+        self.countDown.setFont(QFont('Arial', countdown_size, QFont.Bold))
 
 class AnalogClock(QWidget):
 
@@ -360,6 +380,15 @@ class ClockControls(QDialog):
         self.parent = parent
 
 
+        # time remaining label
+        self.timeLabel = QLabel()
+        self.timeLabel.setAlignment(Qt.AlignCenter)
+        self.timeLabel.setFont(QFont('Arial', 12, QFont.Bold))
+
+        self.timeTimer = QTimer(self)
+        self.timeTimer.timeout.connect(self.updateTimeLabel)
+        self.timeTimer.start(250)
+
         # list of states
         self.list = QListWidget()
         self.list.currentItemChanged.connect(self.changeState)
@@ -424,6 +453,7 @@ class ClockControls(QDialog):
 
         # layout
         self.vLayout = QVBoxLayout()
+        self.vLayout.addWidget(self.timeLabel)
         self.vLayout.addWidget(self.list)
         self.vLayout.addWidget(self.nextButton)
         self.vLayout.addWidget(self.pauseButton)
@@ -468,10 +498,16 @@ class ClockControls(QDialog):
     def generateList(self, states):
         self.statesList = []
         for state in states:
-            item = QListWidgetItem('{} ({} s)'.format(
-                state['name'].replace('<br />','').replace('<br/>','').replace('<br>',''), state['duration']))
+            duration = printMinuteSecondDelta(datetime.timedelta(seconds=state['duration']))
+            item = QListWidgetItem('{} ({})'.format(
+                state['name'].replace('<br />','').replace('<br/>','').replace('<br>',''), duration))
             self.statesList.append(item)
             self.list.addItem(item)
+        self.updateTimeLabel()
+
+    def updateTimeLabel(self):
+        text = self.parent.countDown.text() or 'Time remaining : --:--'
+        self.timeLabel.setText(text)
 
     def switchPause(self):
         if self.parent.m.paused:
@@ -483,6 +519,7 @@ class ClockControls(QDialog):
     def changeState(self, curr):
         new_state = self.statesList.index(curr)
         self.parent.setEvent(new_state)
+        self.updateTimeLabel()
         self.setFocus(True)  #fixes the bug where the keypress is undetected from ClockControls
 
     def addMinute(self):
